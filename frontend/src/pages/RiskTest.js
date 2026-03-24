@@ -1,93 +1,74 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import QuestionCard from "../components/QuestionCard";
+import api from "../services/api";
+import { useAuth } from "../context/AuthContext";
 
 const questions = [
-  {
-    q: "What is your investment time horizon?",
-    options: [
-      { text: "Less than 3 years", score: 1 },
-      { text: "3 – 5 years", score: 2 },
-      { text: "More than 5 years", score: 3 },
-    ],
-  },
-  {
-    q: "How would you react if your portfolio drops 20%?",
-    options: [
-      { text: "Withdraw immediately", score: 1 },
-      { text: "Wait and watch", score: 2 },
-      { text: "Invest more", score: 3 },
-    ],
-  },
-  {
-    q: "What is your primary investment goal?",
-    options: [
-      { text: "Capital protection", score: 1 },
-      { text: "Balanced growth", score: 2 },
-      { text: "Maximum returns", score: 3 },
-    ],
-  },
-  {
-    q: "What is your monthly income stability?",
-    options: [
-      { text: "Very unstable", score: 1 },
-      { text: "Moderately stable", score: 2 },
-      { text: "Highly stable", score: 3 },
-    ],
-  },
-  {
-    q: "How experienced are you with investments?",
-    options: [
-      { text: "Beginner", score: 1 },
-      { text: "Intermediate", score: 2 },
-      { text: "Experienced", score: 3 },
-    ],
-  },
+  { id: "horizon", q: "What is your investment time horizon?", options: [{ text: "Less than 3 years", val: "short" }, { text: "3 – 7 years", val: "medium" }, { text: "7+ years", val: "long" }] },
+  { id: "reaction", q: "How would you react if your portfolio drops 20% in a month?", options: [{ text: "Sell everything", val: "panic" }, { text: "Do nothing / Wait", val: "hold" }, { text: "Buy more", val: "opportunistic" }] },
+  { id: "goal", q: "What is your primary investment goal?", options: [{ text: "Capital preservation", val: "safety" }, { text: "Moderate growth", val: "balanced" }, { text: "Aggressive wealth creation", val: "growth" }] },
+  { id: "income", q: "How stable is your current source of income?", options: [{ text: "Unpredictable", val: "low" }, { text: "Stable salary", val: "stable" }, { text: "High surplus / Multiple streams", val: "high" }] },
+  { id: "experience", q: "How would you rate your investment knowledge?", options: [{ text: "Beginner", val: "novice" }, { text: "Intermediate", val: "informed" }, { text: "Professional / Expert", val: "expert" }] },
 ];
 
-export default function RiskTest() {
+const RiskTest = () => {
   const [current, setCurrent] = useState(0);
-  const [score, setScore] = useState(0);
+  const [answers, setAnswers] = useState({});
+  const [loading, setLoading] = useState(false);
+  const { login } = useAuth(); // We'll use this to refresh user via /me later or just manual refresh
   const navigate = useNavigate();
 
-  const handleAnswer = (value) => {
-    const newScore = score + value;
-    setScore(newScore);
+  const handleAnswer = async (val) => {
+    const newAnswers = { ...answers, [questions[current].id]: val };
+    setAnswers(newAnswers);
 
     if (current + 1 < questions.length) {
       setCurrent(current + 1);
     } else {
-      let risk = "Conservative";
-      if (newScore >= 15) risk = "Aggressive";
-      else if (newScore >= 9) risk = "Moderate";
-
-      localStorage.setItem("risk_profile", risk);
-      navigate("/risk-result");
+      setLoading(true);
+      try {
+        await api.post("/risk-profile", { answers: newAnswers });
+        // Instead of re-logging in, we just redirect and let the App refresh user or just rely on the API
+        navigate("/risk-result");
+      } catch (err) {
+        console.error("Failed to save risk profile", err);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
+  const currentQ = questions[current];
   const progress = ((current + 1) / questions.length) * 100;
 
+  if (loading) return <div className="text-white">Calculating your profile...</div>;
+
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4">
-      {/* Progress bar */}
-      <div className="w-full max-w-xl mb-4">
-        <div className="h-2 bg-gray-300 rounded">
-          <div
-            className="h-2 bg-blue-600 rounded"
-            style={{ width: `${progress}%` }}
-          />
+    <div className="max-w-xl mx-auto py-12 px-4">
+      <div className="mb-8">
+        <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+          <div className="h-full bg-cyan-400 transition-all duration-500" style={{ width: `${progress}%` }}></div>
         </div>
-        <p className="text-sm text-gray-500 mt-1">
-          Question {current + 1} of {questions.length}
-        </p>
+        <p className="text-slate-500 text-xs font-bold uppercase mt-3 tracking-widest">Question {current + 1} of {questions.length}</p>
       </div>
 
-      <QuestionCard
-        question={questions[current].q}
-        options={questions[current].options}
-        onAnswer={handleAnswer}
-      />
+      <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-2xl">
+        <h2 className="text-2xl font-bold text-white mb-8 leading-tight">{currentQ.q}</h2>
+        <div className="space-y-3">
+          {currentQ.options.map((opt, i) => (
+            <button
+              key={i}
+              onClick={() => handleAnswer(opt.val)}
+              className="w-full text-left p-5 rounded-2xl bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-700 hover:border-cyan-500/50 hover:text-white transition-all group flex items-center justify-between"
+            >
+              <span className="font-medium">{opt.text}</span>
+              <span className="opacity-0 group-hover:opacity-100 transition-opacity text-cyan-400">→</span>
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
-}
+};
+
+export default RiskTest;

@@ -1,51 +1,78 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import api from "../services/api";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
-export default function Login() {
+const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const { login } = useAuth();
   const navigate = useNavigate();
 
-  const submit = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     try {
-      const res = await api.post("/login", { email, password });
-      localStorage.setItem("token", res.data.access_token);
-      navigate("/risk-test");
-    } catch {
+      await login(email, password);
+      navigate("/");
+    } catch (err) {
       setError("Invalid email or password");
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="w-96 bg-white p-6 rounded shadow">
-        <h2 className="text-2xl font-bold mb-4 text-center">Login</h2>
+    <div className="min-h-screen flex items-center justify-center bg-slate-950 px-4">
+      <div className="max-w-md w-full space-y-8 p-10 bg-slate-900 rounded-2xl shadow-2xl border border-slate-800">
+        <div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
+            Wealth Tracker
+          </h2>
+          <p className="mt-2 text-center text-sm text-slate-400">
+            Sign in to manage your portfolio
+          </p>
+        </div>
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          {error && <div className="text-red-500 text-sm text-center">{typeof error === 'string' ? error : JSON.stringify(error)}</div>}
+          <div className="rounded-md shadow-sm -space-y-px">
+            <div>
+              <input
+                type="email"
+                required
+                className="appearance-none rounded-none relative block w-full px-3 py-3 border border-slate-700 placeholder-slate-500 text-white rounded-t-lg bg-slate-800 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 focus:z-10 sm:text-sm"
+                placeholder="Email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div>
+              <input
+                type="password"
+                required
+                className="appearance-none rounded-none relative block w-full px-3 py-3 border border-slate-700 placeholder-slate-500 text-white rounded-b-lg bg-slate-800 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 focus:z-10 sm:text-sm"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+          </div>
 
-        {error && <p className="text-red-500 text-sm mb-2">{error}</p>}
-
-        <input
-          className="input mb-2"
-          placeholder="Email"
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <input
-          type="password"
-          className="input mb-4"
-          placeholder="Password"
-          onChange={(e) => setPassword(e.target.value)}
-        />
-
-        <button className="btn w-full" onClick={submit}>
-          Login
-        </button>
-
-        <p className="text-sm text-center mt-4">
-          Don’t have an account?{" "}
-          <Link to="/" className="text-blue-600">Register</Link>
-        </p>
+          <div>
+            <button
+              type="submit"
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-slate-900 bg-cyan-400 hover:bg-cyan-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 transition-colors uppercase tracking-wider"
+            >
+              Sign in
+            </button>
+          </div>
+          
+          <div className="text-center">
+            <Link to="/register" className="text-cyan-400 hover:text-cyan-300 text-sm">
+              Don't have an account? Register
+            </Link>
+          </div>
+        </form>
       </div>
     </div>
   );
-}
+};
+
+export default Login;
