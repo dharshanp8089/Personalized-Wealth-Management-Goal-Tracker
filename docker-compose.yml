@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: strongpassword123
+      POSTGRES_DB: wealth_tracker
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app_network
+
+  redis:
+    image: redis:alpine
+    restart: always
+    networks:
+      - app_network
+
+  backend:
+    build:
+      context: ./backend
+    restart: on-failure
+    environment:
+      - DATABASE_URL=postgresql://admin:strongpassword123@db:5432/wealth_tracker
+      - REDIS_URL=redis://redis:6379/0
+      - JWT_SECRET=your-super-secret-key-change-this-in-production
+    depends_on:
+      - db
+      - redis
+    networks:
+      - app_network
+
+  celery_worker:
+    build:
+      context: ./backend
+    command: celery -A tasks worker --loglevel=info
+    restart: on-failure
+    environment:
+      - DATABASE_URL=postgresql://admin:strongpassword123@db:5432/wealth_tracker
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - backend
+      - redis
+      - db
+    networks:
+      - app_network
+
+  celery_beat:
+    build:
+      context: ./backend
+    command: celery -A tasks beat --loglevel=info
+    restart: on-failure
+    environment:
+      - DATABASE_URL=postgresql://admin:strongpassword123@db:5432/wealth_tracker
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - backend
+      - redis
+      - db
+    networks:
+      - app_network
+
+  frontend:
+    build:
+      context: ./frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
