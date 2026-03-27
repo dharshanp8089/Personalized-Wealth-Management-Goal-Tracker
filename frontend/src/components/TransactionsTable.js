@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import api from "../services/api";
 
 const TransactionsTable = ({ symbol = null }) => {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [, setError] = useState("");
 
   const exportTransactions = async () => {
     try {
@@ -21,7 +21,7 @@ const TransactionsTable = ({ symbol = null }) => {
     }
   };
 
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -33,11 +33,11 @@ const TransactionsTable = ({ symbol = null }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [symbol]);
 
   useEffect(() => {
     fetchTransactions();
-  }, [symbol]);
+  }, [fetchTransactions]);
 
   const formatCurrency = (val) => {
     return new Intl.NumberFormat("en-IN", {
