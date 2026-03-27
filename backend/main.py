@@ -9,9 +9,12 @@ import json
 import random
 import math
 
-from database import SessionLocal
+from database import SessionLocal, engine, Base
 from models import User, Goal, Investment, Transaction, AssetPrice, Simulation, Recommendation
 from utils import hash_password, verify_password
+
+# Auto-create tables on startup
+Base.metadata.create_all(bind=engine)
 
 
 class RegisterRequest(BaseModel):
