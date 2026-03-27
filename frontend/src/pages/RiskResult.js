@@ -1,11 +1,9 @@
-import React, { useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import React from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import api from "../services/api";
 
 const RiskResult = () => {
   const { user } = useAuth();
-  const navigate = useNavigate();
 
   const getRiskColor = (risk) => {
     const r = risk?.toLowerCase();

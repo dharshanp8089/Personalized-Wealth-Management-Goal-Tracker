@@ -10,7 +10,7 @@ const Portfolio = () => {
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState("buy");
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [, setError] = useState("");
 
   const COLORS = ["#22d3ee", "#818cf8", "#f472b6", "#fbbf24", "#34d399"];
 

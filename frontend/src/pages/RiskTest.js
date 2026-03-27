@@ -15,7 +15,7 @@ const RiskTest = () => {
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState({});
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth(); // We'll use this to refresh user via /me later or just manual refresh
+  useAuth();
   const navigate = useNavigate();
 
   const handleAnswer = async (val) => {

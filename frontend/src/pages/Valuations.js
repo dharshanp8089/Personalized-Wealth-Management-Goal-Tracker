@@ -4,7 +4,7 @@ import api from "../services/api";
 const Valuations = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [, setError] = useState("");
 
   const fetchValuations = async () => {
     try {
